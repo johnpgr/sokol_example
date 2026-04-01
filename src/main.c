@@ -363,8 +363,8 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb      = init,
         .frame_cb     = frame,
         .cleanup_cb   = cleanup,
-        .width        = 960,
-        .height       = 600,
+        .width        = APP_WIDTH,
+        .height       = APP_HEIGHT,
         .window_title = "SOKOL EXAMPLE 2D SPRITES + POINT LIGHT",
         .logger.func  = slog_func,
     };

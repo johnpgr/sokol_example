@@ -3,6 +3,9 @@ set -eu
 cd "$(dirname "$0")"
 
 # --- Unpack Arguments --------------------------------------------------------
+APP_WIDTH="${APP_WIDTH:-1280}"
+APP_HEIGHT="${APP_HEIGHT:-720}"
+
 for arg in "$@"; do declare "$arg=1"; done
 
 if [ -v clean ]; then
@@ -80,16 +83,17 @@ if [ -v web ]; then
     exit 1
   fi
 
-  common="-std=c11 -I../../thirdparty -I../../src -I../../generated -DSOKOL_WGPU --use-port=emdawnwebgpu"
+  common="-std=c11 -I../../thirdparty -I../../src -I../../generated -DSOKOL_WGPU --use-port=emdawnwebgpu -DAPP_WIDTH=$APP_WIDTH -DAPP_HEIGHT=$APP_HEIGHT"
   compile_debug="$compiler -g -O0 -D_DEBUG -DBUILD_DEBUG=1 $common"
   compile_release="$compiler -O2 -DNDEBUG -DBUILD_DEBUG=0 $common"
   compile="$compile_debug"
   if [ -v release ]; then compile="$compile_release"; fi
 
-  link_flags="-sASYNCIFY -sALLOW_MEMORY_GROWTH=1 -sENVIRONMENT=web --shell-file ../../web/shell.html"
+  link_flags="-sASYNCIFY -sALLOW_MEMORY_GROWTH=1 -sENVIRONMENT=web --shell-file shell.html"
 
   cd build/web
   echo "[building sokol_sprites.html]"
+  sed -e "s/{{WIDTH}}/$APP_WIDTH/g" -e "s/{{HEIGHT}}/$APP_HEIGHT/g" ../../web/shell.html > shell.html
   $compile ../../src/main.c $link_flags -o sokol_sprites.html
   echo "[output] build/web/sokol_sprites.html"
   exit 0
@@ -125,7 +129,7 @@ fi
 
 mkdir -p build/linux
 
-common="-std=c11 -I../../thirdparty -I../../src -I../../generated $vulkan_cflags $x11_cflags -DSOKOL_GLSL"
+common="-std=c11 -I../../thirdparty -I../../src -I../../generated $vulkan_cflags $x11_cflags -DSOKOL_GLSL -DAPP_WIDTH=$APP_WIDTH -DAPP_HEIGHT=$APP_HEIGHT"
 compile_debug="$compiler -g -O0 -D_DEBUG -DBUILD_DEBUG=1 $common"
 compile_release="$compiler -O2 -DNDEBUG -DBUILD_DEBUG=0 $common"
 compile="$compile_debug"

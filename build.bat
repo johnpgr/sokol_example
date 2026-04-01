@@ -3,6 +3,9 @@ setlocal enabledelayedexpansion
 cd /D "%~dp0"
 
 :: --- Unpack Arguments -------------------------------------------------------
+if not defined APP_WIDTH set APP_WIDTH=1280
+if not defined APP_HEIGHT set APP_HEIGHT=720
+
 for %%a in (%*) do set "%%~a=1"
 
 if "%clean%"=="1" (
@@ -70,7 +73,7 @@ if "%web%"=="1" (
 
   set "compiler=emcc"
   if defined EMCC set "compiler=%EMCC%"
-  set common=-std=c11 -I..\..\thirdparty -I..\..\src -I..\..\generated -DSOKOL_WGPU --use-port=emdawnwebgpu
+  set common=-std=c11 -I..\..\thirdparty -I..\..\src -I..\..\generated -DSOKOL_WGPU --use-port=emdawnwebgpu -DAPP_WIDTH=%APP_WIDTH% -DAPP_HEIGHT=%APP_HEIGHT%
   set compile_debug=%compiler% -g -O0 -D_DEBUG -DBUILD_DEBUG=1 %common%
   set compile_release=%compiler% -O2 -DNDEBUG -DBUILD_DEBUG=0 %common%
 
@@ -79,7 +82,8 @@ if "%web%"=="1" (
 
   pushd build\web
   echo [building sokol_sprites.html]
-  %compile% ..\..\src\main.c -sASYNCIFY -sALLOW_MEMORY_GROWTH=1 -sENVIRONMENT=web --shell-file ..\..\web\shell.html -o sokol_sprites.html || exit /b 1
+  powershell -Command "(Get-Content ..\..\web\shell.html) -replace '{{WIDTH}}', '%APP_WIDTH%' -replace '{{HEIGHT}}', '%APP_HEIGHT%' | Set-Content shell.html"
+  %compile% ..\..\src\main.c -sASYNCIFY -sALLOW_MEMORY_GROWTH=1 -sENVIRONMENT=web --shell-file shell.html -o sokol_sprites.html || exit /b 1
   popd
 
   echo [output] build\web\sokol_sprites.html
@@ -89,7 +93,7 @@ if "%web%"=="1" (
 :: --- Windows Build -----------------------------------------------------------
 if not exist build\windows mkdir build\windows
 
-set common=/nologo /std:c11 /FC /I..\..\thirdparty /I..\..\src /I..\..\generated /DSOKOL_D3D11
+set common=/nologo /std:c11 /FC /I..\..\thirdparty /I..\..\src /I..\..\generated /DSOKOL_D3D11 /DAPP_WIDTH=%APP_WIDTH% /DAPP_HEIGHT=%APP_HEIGHT%
 set compile_debug=cl /Zi /Od /D_DEBUG /DBUILD_DEBUG=1 %common%
 set compile_release=cl /O2 /DNDEBUG /DBUILD_DEBUG=0 %common%
 
