@@ -1,0 +1,6 @@
+[submodule "thirdparty/tools/emsdk"]
+	path = thirdparty/tools/emsdk
+	url = https://github.com/emscripten-core/emsdk.git
+[submodule "thirdparty/tools/sokol-shdc"]
+	path = thirdparty/tools/sokol-shdc
+	url = https://github.com/floooh/sokol-tools-bin.git
