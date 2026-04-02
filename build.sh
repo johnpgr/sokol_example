@@ -22,17 +22,16 @@ generate_compile_db() {
   target_dir="$1"
   compile_cmd="$2"
   src_abs="$(cd src && pwd)/main.c"
+  out_dir="$(cd "$target_dir" && pwd)"
 
-  (
-    cd "$target_dir"
-    out_dir="$PWD"
-    cat > compile_commands.json <<EOF
+  cat > compile_commands.json <<EOF
 [
 {"directory":"$out_dir","command":"$compile_cmd -c $src_abs","file":"$src_abs"}
 ]
 EOF
-    cp -f compile_commands.json ../../compile_commands.json
-  )
+
+  # Keep a single compile database at repo root.
+  rm -f "$target_dir/compile_commands.json"
 }
 
 if [ -v clean ]; then
@@ -139,22 +138,14 @@ if [ -v web ]; then
   fi
   echo "[output] build/web/sokol_sprites.html"
   if [ "$want_compile_db" = "1" ]; then
-    echo "[output] build/web/compile_commands.json"
+    echo "[output] compile_commands.json"
   fi
   exit 0
 fi
 
 # --- Linux Build -------------------------------------------------------------
-if [ -v clang ]; then
-  compiler="${CC:-clang}"
-  echo "[clang compile]"
-elif [ -v gcc ]; then
-  compiler="${CC:-gcc}"
-  echo "[gcc compile]"
-else
-  compiler="${CC:-cc}"
-  echo "[default compile: $compiler]"
-fi
+compiler="${CC:-clang}"
+echo "[clang compile: $compiler]"
 
 vulkan_cflags=''
 vulkan_libs='-lvulkan'
@@ -174,7 +165,7 @@ fi
 
 mkdir -p build/linux
 
-common="-std=c11 -I../../thirdparty -I../../src -I../../generated $vulkan_cflags $x11_cflags -DSOKOL_GLSL -DWIDTH=$WIDTH -DHEIGHT=$HEIGHT"
+common="-std=c11 -D_POSIX_C_SOURCE=200809L -I../../thirdparty -I../../src -I../../generated $vulkan_cflags $x11_cflags -DSOKOL_VULKAN -DWIDTH=$WIDTH -DHEIGHT=$HEIGHT"
 compile_debug="$compiler -g -O0 -D_DEBUG -DBUILD_DEBUG=1 $common"
 compile_release="$compiler -O2 -DNDEBUG -DBUILD_DEBUG=0 $common"
 compile="$compile_debug"
@@ -195,5 +186,5 @@ else
 fi
 echo "[output] build/linux/sokol_sprites"
 if [ "$want_compile_db" = "1" ]; then
-  echo "[output] build/linux/compile_commands.json"
+  echo "[output] compile_commands.json"
 fi
