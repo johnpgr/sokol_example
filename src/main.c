@@ -10,24 +10,8 @@
 // Build instructions are in CMakeLists.txt and the platform build scripts.
 // =============================================================================
 
-#define _POSIX_C_SOURCE 200809L
-
 #define SOKOL_IMPL
 #define SOKOL_LOG_IMPL
-
-#if defined(_WIN32)
-#define SOKOL_D3D11
-#elif defined(__linux__)
-#define SOKOL_VULKAN
-#elif defined(__APPLE__)
-#define SOKOL_METAL
-#elif defined(__EMSCRIPTEN__)
-#ifndef SOKOL_WGPU
-#define SOKOL_WGPU
-#endif
-#else
-#error "Unknown platform!"
-#endif
 
 #include "sokol/sokol_app.h"
 #include "sokol/sokol_gfx.h"
@@ -133,7 +117,7 @@ fn void build_texture(void) {
 }
 
 // How many sprites to draw
-#define NUM_SPRITES (12)
+#define NUM_SPRITES (1000)
 
 typedef struct {
     float32 x, y;   // World Position (pixels from center)
@@ -363,8 +347,8 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb      = init,
         .frame_cb     = frame,
         .cleanup_cb   = cleanup,
-        .width        = APP_WIDTH,
-        .height       = APP_HEIGHT,
+        .width        = WIDTH,
+        .height       = HEIGHT,
         .window_title = "SOKOL EXAMPLE 2D SPRITES + POINT LIGHT",
         .logger.func  = slog_func,
     };
