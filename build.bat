@@ -13,6 +13,11 @@ if "%compile_commands%"=="1" set "want_compile_db=1"
 if "%compdb%"=="1" set "want_compile_db=1"
 if "%ccdb%"=="1" set "want_compile_db=1"
 
+set "want_shader_build=0"
+if "%shaders%"=="1" set "want_shader_build=1"
+if "%shader%"=="1" set "want_shader_build=1"
+if "%shdc%"=="1" set "want_shader_build=1"
+
 if "%clean%"=="1" (
   if exist build rmdir /S /Q build
   echo [cleaned build directory]
@@ -43,8 +48,17 @@ if exist "%~dp0thirdparty\tools\sokol-shdc\bin\win32\sokol-shdc.exe" set "shdc=%
 
 if exist "%~dp0shaders\sprite.glsl" (
   if defined shdc (
-    echo [compiling shaders]
-    "%shdc%" --input "%~dp0shaders\sprite.glsl" --output "%~dp0generated\sprite.glsl.h" --slang glsl430:hlsl5:wgsl || exit /b 1
+    if "%want_shader_build%"=="1" (
+      echo [compiling shaders]
+      "%shdc%" --input "%~dp0shaders\sprite.glsl" --output "%~dp0generated\sprite.glsl.h" --slang glsl430:hlsl5:wgsl || exit /b 1
+    ) else (
+      if not exist "%~dp0generated\sprite.glsl.h" (
+        echo [generated shader missing, compiling]
+        "%shdc%" --input "%~dp0shaders\sprite.glsl" --output "%~dp0generated\sprite.glsl.h" --slang glsl430:hlsl5:wgsl || exit /b 1
+      ) else (
+        echo [shader generation skipped; pass shaders to enable]
+      )
+    )
   ) else (
     if not exist "%~dp0generated\sprite.glsl.h" (
       echo ERROR: sokol-shdc not found and generated\sprite.glsl.h is missing.

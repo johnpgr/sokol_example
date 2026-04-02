@@ -13,6 +13,11 @@ if [ -v compile_commands ] || [ -v compdb ] || [ -v ccdb ]; then
   want_compile_db=1
 fi
 
+want_shader_build=0
+if [ -v shaders ] || [ -v shader ] || [ -v shdc ]; then
+  want_shader_build=1
+fi
+
 generate_compile_db() {
   target_dir="$1"
   compile_cmd="$2"
@@ -73,8 +78,15 @@ fi
 
 if [ -f shaders/sprite.glsl ]; then
   if [ -n "$shdc" ]; then
-    echo "[compiling shaders]"
-    "$shdc" --input "$PWD/shaders/sprite.glsl" --output "$PWD/generated/sprite.glsl.h" --slang glsl430:hlsl5:wgsl:spirv_vk
+    if [ "$want_shader_build" = "1" ]; then
+      echo "[compiling shaders]"
+      "$shdc" --input "$PWD/shaders/sprite.glsl" --output "$PWD/generated/sprite.glsl.h" --slang glsl430:hlsl5:wgsl:spirv_vk
+    elif [ ! -f generated/sprite.glsl.h ]; then
+      echo "[generated shader missing, compiling]"
+      "$shdc" --input "$PWD/shaders/sprite.glsl" --output "$PWD/generated/sprite.glsl.h" --slang glsl430:hlsl5:wgsl:spirv_vk
+    else
+      echo "[shader generation skipped; pass shaders to enable]"
+    fi
   elif [ ! -f generated/sprite.glsl.h ]; then
     echo "ERROR: sokol-shdc not found and generated/sprite.glsl.h is missing."
     exit 1
