@@ -69,16 +69,8 @@ if [ -v web ]; then
 fi
 
 # --- Linux Build -------------------------------------------------------------
-if [ -v clang ]; then
-  compiler="${CC:-clang}"
-  echo "[clang compile]"
-elif [ -v gcc ]; then
-  compiler="${CC:-gcc}"
-  echo "[gcc compile]"
-else
-  compiler="${CC:-cc}"
-  echo "[default compile: $compiler]"
-fi
+compiler="${CC:-clang}"
+echo "[clang compile: $compiler]"
 
 vulkan_cflags=''
 vulkan_libs='-lvulkan'
@@ -98,7 +90,7 @@ fi
 
 mkdir -p build/linux
 
-common="-std=c11 -I../../thirdparty -I../../src -I../../generated $vulkan_cflags $x11_cflags -DSOKOL_GLSL -DWIDTH=$WIDTH -DHEIGHT=$HEIGHT"
+common="-std=c11 -D_POSIX_C_SOURCE=200809L -I../../thirdparty -I../../src -I../../generated $vulkan_cflags $x11_cflags -DSOKOL_VULKAN -DWIDTH=$WIDTH -DHEIGHT=$HEIGHT"
 compile_debug="$compiler -g -O0 -D_DEBUG -DBUILD_DEBUG=1 $common"
 compile_release="$compiler -O2 -DNDEBUG -DBUILD_DEBUG=0 $common"
 compile="$compile_debug"
