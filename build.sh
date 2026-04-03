@@ -8,33 +8,6 @@ HEIGHT="${HEIGHT:-720}"
 
 for arg in "$@"; do declare "$arg=1"; done
 
-want_compile_db=0
-if [ -v compile_commands ] || [ -v compdb ] || [ -v ccdb ]; then
-  want_compile_db=1
-fi
-
-want_shader_build=0
-if [ -v shaders ] || [ -v shader ] || [ -v shdc ]; then
-  want_shader_build=1
-fi
-
-generate_compile_db() {
-  target_dir="$1"
-  compile_cmd="$2"
-  src_abs="$(cd src && pwd)/main.c"
-
-  (
-    cd "$target_dir"
-    out_dir="$PWD"
-    cat > compile_commands.json <<EOF
-[
-{"directory":"$out_dir","command":"$compile_cmd -c $src_abs","file":"$src_abs"}
-]
-EOF
-    cp -f compile_commands.json ../../compile_commands.json
-  )
-}
-
 if [ -v clean ]; then
   rm -rf build
   echo "[cleaned build directory]"
@@ -53,48 +26,8 @@ if [ -v web ]; then echo "[web target]"; fi
 mkdir -p build
 mkdir -p generated
 
-# --- Shader Generation -------------------------------------------------------
-shdc=''
-os_name="$(uname -s)"
-arch_name="$(uname -m)"
-
-if [ "$os_name" = "Linux" ]; then
-  if [ "$arch_name" = "aarch64" ] || [ "$arch_name" = "arm64" ]; then
-    shdc="./thirdparty/tools/sokol-shdc/bin/linux_arm64/sokol-shdc"
-  else
-    shdc="./thirdparty/tools/sokol-shdc/bin/linux/sokol-shdc"
-  fi
-elif [ "$os_name" = "Darwin" ]; then
-  if [ "$arch_name" = "arm64" ]; then
-    shdc="./thirdparty/tools/sokol-shdc/bin/osx_arm64/sokol-shdc"
-  else
-    shdc="./thirdparty/tools/sokol-shdc/bin/osx/sokol-shdc"
-  fi
-fi
-
-if [ ! -x "$shdc" ]; then
-  shdc=''
-fi
-
-if [ -f shaders/sprite.glsl ]; then
-  if [ -n "$shdc" ]; then
-    if [ "$want_shader_build" = "1" ]; then
-      echo "[compiling shaders]"
-      "$shdc" --input "$PWD/shaders/sprite.glsl" --output "$PWD/generated/sprite.glsl.h" --slang glsl430:hlsl5:wgsl:spirv_vk
-    elif [ ! -f generated/sprite.glsl.h ]; then
-      echo "[generated shader missing, compiling]"
-      "$shdc" --input "$PWD/shaders/sprite.glsl" --output "$PWD/generated/sprite.glsl.h" --slang glsl430:hlsl5:wgsl:spirv_vk
-    else
-      echo "[shader generation skipped; pass shaders to enable]"
-    fi
-  elif [ ! -f generated/sprite.glsl.h ]; then
-    echo "ERROR: sokol-shdc not found and generated/sprite.glsl.h is missing."
-    exit 1
-  else
-    echo "[warning] sokol-shdc not found, using existing generated/sprite.glsl.h"
-  fi
-elif [ ! -f generated/sprite.glsl.h ]; then
-  echo "ERROR: shaders/sprite.glsl and generated/sprite.glsl.h are both missing."
+if [ ! -f generated/sprite.glsl.h ]; then
+  echo "ERROR: generated/sprite.glsl.h is missing. Run ./build_shader.sh first."
   exit 1
 fi
 
@@ -129,18 +62,9 @@ if [ -v web ]; then
   echo "[building sokol_sprites.html]"
   sed -e "s/{{WIDTH}}/$WIDTH/g" -e "s/{{HEIGHT}}/$HEIGHT/g" ../../web/shell.html > shell.html
   $compile ../../src/main.c $link_flags -o sokol_sprites.html
-  if [ "$want_compile_db" = "1" ]; then
-    echo "[generating compile_commands.json]"
-    cd ../..
-    generate_compile_db "build/web" "$compile"
-  else
-    echo "[compile_commands generation skipped; pass compdb to enable]"
-    cd ../..
-  fi
+
+  cd ../..
   echo "[output] build/web/sokol_sprites.html"
-  if [ "$want_compile_db" = "1" ]; then
-    echo "[output] build/web/compile_commands.json"
-  fi
   exit 0
 fi
 
@@ -185,15 +109,6 @@ link_flags="$vulkan_libs -ldl -lm -lpthread $x11_libs"
 cd build/linux
 echo "[building sokol_sprites]"
 $compile ../../src/main.c $link_flags -o sokol_sprites
-if [ "$want_compile_db" = "1" ]; then
-  echo "[generating compile_commands.json]"
-  cd ../..
-  generate_compile_db "build/linux" "$compile"
-else
-  echo "[compile_commands generation skipped; pass compdb to enable]"
-  cd ../..
-fi
+
+cd ../..
 echo "[output] build/linux/sokol_sprites"
-if [ "$want_compile_db" = "1" ]; then
-  echo "[output] build/linux/compile_commands.json"
-fi
